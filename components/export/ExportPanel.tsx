@@ -11,7 +11,7 @@ import type { GeneratedComponent } from '@/types/canvas';
 
 interface ExportPanelProps {
   components: GeneratedComponent[];
-  previewRef: React.RefObject<HTMLDivElement>;
+  previewRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export default function ExportPanel({ components, previewRef }: ExportPanelProps) {
