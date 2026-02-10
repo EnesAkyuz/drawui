@@ -1,26 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import type { GeneratedComponent } from '@/types/canvas';
-import { loadComponentRegistry } from '@/lib/component-registry';
+import { getComponentFromRegistry } from '@/lib/component-registry.client';
 
 interface ComponentLayerProps {
   component: GeneratedComponent;
 }
 
 export default function ComponentLayer({ component }: ComponentLayerProps) {
-  const [ComponentToRender, setComponentToRender] = useState<React.ComponentType<any> | null>(null);
-
-  useEffect(() => {
-    loadComponentRegistry().then((registry) => {
-      const Component = registry[component.type];
-      if (Component) {
-        setComponentToRender(() => Component);
-      } else {
-        console.warn(`Component not found in registry: ${component.type}`);
-      }
-    });
-  }, [component.type]);
+  const ComponentToRender = useMemo(
+    () => getComponentFromRegistry(component.type),
+    [component.type]
+  );
 
   if (!ComponentToRender) {
     return (
