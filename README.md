@@ -1,36 +1,144 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Canvas-to-UI
 
-## Getting Started
+Convert freehand drawings into production-ready React UI components using AI.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- 🎨 **Canvas Drawing** - Powered by Excalidraw with full toolset
+- 🤖 **AI Detection** - Google Gemini Vision API automatically detects UI components
+- 🎯 **shadcn/ui** - Generates components from the shadcn/ui library
+- 🔄 **Live Preview** - Switch between drawing and preview modes
+- 📦 **Export** - Generate React/TypeScript code and image snapshots
+
+## Quick Start
+
+### Prerequisites
+
+- [Bun](https://bun.sh/) installed
+- Google Gemini API key ([Get one here](https://makersuite.google.com/app/apikey))
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone <repo-url>
+   cd drawui
+   ```
+
+2. Install dependencies:
+   ```bash
+   bun install
+   ```
+
+3. Set up environment variables:
+   ```bash
+   cp .env.local.example .env.local
+   # Add your GOOGLE_GEMINI_API_KEY
+   ```
+
+4. Start development server:
+   ```bash
+   bun dev
+   ```
+
+5. Open http://localhost:3000
+
+## Usage
+
+1. **Draw** - Use Excalidraw tools to sketch UI mockups
+2. **Wait** - AI automatically analyzes after 2 seconds of inactivity
+3. **Preview** - Switch to Preview mode to see generated components
+4. **Export** - Copy code or download as `.tsx` file or image
+
+## Tech Stack
+
+- **Frontend:** Next.js 16, React 19, TypeScript
+- **Canvas:** Excalidraw
+- **AI:** Google Gemini Vision API (gemini-2.0-flash-exp)
+- **UI:** shadcn/ui, Radix UI, Tailwind CSS v4
+- **Testing:** Vitest, jsdom
+- **Package Manager:** Bun
+- **Code Quality:** Biome
+
+## Architecture
+
+```
+app/
+  page.tsx                  # Main canvas app
+  api/analyze-drawing/      # Gemini API route
+components/
+  canvas/                   # Canvas components
+    DrawingCanvas.tsx       # Main component
+    ExcalidrawWrapper.tsx   # Excalidraw integration
+    PreviewOverlay.tsx      # Preview mode overlay
+    ComponentLayer.tsx      # Individual component renderer
+  export/                   # Export functionality
+    ExportPanel.tsx         # Export UI
+    CodeGenerator.tsx       # Code generation UI
+  ui/                       # shadcn/ui components
+lib/
+  gemini.ts                 # Gemini API client
+  canvas-utils.ts           # Canvas utilities
+  component-mapper.ts       # Component deduplication
+  code-generator.ts         # React code generation
+  component-registry.ts     # Server-side component discovery
+  component-registry.client.ts  # Client-side component registry
+types/
+  canvas.ts                 # TypeScript types
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Run tests:**
+```bash
+bun test
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Run tests with UI:**
+```bash
+bun test:ui
+```
 
-## Learn More
+**Build for production:**
+```bash
+bun run build
+```
 
-To learn more about Next.js, take a look at the following resources:
+**Lint code:**
+```bash
+bun run lint
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Format code:**
+```bash
+bun run format
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## API Configuration
 
-## Deploy on Vercel
+The app uses the Google Gemini Vision API for component detection. Set your API key in `.env.local`:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```env
+GOOGLE_GEMINI_API_KEY=your_api_key_here
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Component Detection
+
+The AI can currently detect these shadcn/ui components:
+- Button, Input, Textarea
+- Card (with Header, Content, Footer, Title, Description)
+- Label, Badge, Avatar, Separator
+- Select, Checkbox, Radio Group, Switch, Slider
+- Tabs, Dialog, Alert, Tooltip
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests and linting
+5. Submit a pull request
+
+## License
+
+MIT
