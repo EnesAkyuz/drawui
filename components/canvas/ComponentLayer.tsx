@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import type { GeneratedComponent } from '@/types/canvas';
-import { getComponentFromRegistry } from '@/lib/component-registry.client';
+import { useMemo } from "react";
+import { getComponentFromRegistry } from "@/lib/component-registry.client";
+import type { GeneratedComponent } from "@/types/canvas";
 
 interface ComponentLayerProps {
   component: GeneratedComponent;
@@ -11,14 +11,14 @@ interface ComponentLayerProps {
 export default function ComponentLayer({ component }: ComponentLayerProps) {
   const ComponentToRender = useMemo(
     () => getComponentFromRegistry(component.type),
-    [component.type]
+    [component.type],
   );
 
   if (!ComponentToRender) {
     return (
       <div
         style={{
-          position: 'absolute',
+          position: "absolute",
           left: component.position.x,
           top: component.position.y,
           width: component.position.width,
@@ -34,7 +34,7 @@ export default function ComponentLayer({ component }: ComponentLayerProps) {
   return (
     <div
       style={{
-        position: 'absolute',
+        position: "absolute",
         left: component.position.x,
         top: component.position.y,
         width: component.position.width,

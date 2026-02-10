@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Pencil, Eye, Loader2 } from 'lucide-react';
-import ExcalidrawWrapper from './ExcalidrawWrapper';
-import PreviewOverlay from './PreviewOverlay';
-import ExportPanel from '../export/ExportPanel';
-import { mergeComponents } from '@/lib/component-mapper';
-import type { CanvasMode, GeneratedComponent } from '@/types/canvas';
+import { Eye, Loader2, Pencil } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { mergeComponents } from "@/lib/component-mapper";
+import type { CanvasMode, GeneratedComponent } from "@/types/canvas";
+import ExportPanel from "../export/ExportPanel";
+import ExcalidrawWrapper from "./ExcalidrawWrapper";
+import PreviewOverlay from "./PreviewOverlay";
 
 export default function DrawingCanvas() {
-  const [mode, setMode] = useState<CanvasMode>('drawing');
+  const [mode, setMode] = useState<CanvasMode>("drawing");
   const [components, setComponents] = useState<GeneratedComponent[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -21,34 +21,34 @@ export default function DrawingCanvas() {
       setIsAnalyzing(true);
 
       try {
-        const response = await fetch('/api/analyze-drawing', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("/api/analyze-drawing", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ image: imageData }),
         });
 
         if (!response.ok) {
-          throw new Error('Failed to analyze drawing');
+          throw new Error("Failed to analyze drawing");
         }
 
         const data = await response.json();
 
         if (data.components && data.components.length > 0) {
           setComponents((prev) =>
-            mergeComponents(prev, data.components, elementsHash)
+            mergeComponents(prev, data.components, elementsHash),
           );
         }
       } catch (error) {
-        console.error('Error analyzing drawing:', error);
+        console.error("Error analyzing drawing:", error);
       } finally {
         setIsAnalyzing(false);
       }
     },
-    []
+    [],
   );
 
   const toggleMode = () => {
-    setMode((prev) => (prev === 'drawing' ? 'preview' : 'drawing'));
+    setMode((prev) => (prev === "drawing" ? "preview" : "drawing"));
   };
 
   return (
@@ -58,7 +58,7 @@ export default function DrawingCanvas() {
         {/* Mode Toggle */}
         <div className="absolute top-4 left-4 z-20 flex gap-2">
           <Button
-            variant={mode === 'drawing' ? 'default' : 'outline'}
+            variant={mode === "drawing" ? "default" : "outline"}
             size="sm"
             onClick={toggleMode}
             className="gap-2"
@@ -67,7 +67,7 @@ export default function DrawingCanvas() {
             Drawing
           </Button>
           <Button
-            variant={mode === 'preview' ? 'default' : 'outline'}
+            variant={mode === "preview" ? "default" : "outline"}
             size="sm"
             onClick={toggleMode}
             className="gap-2"
@@ -87,7 +87,7 @@ export default function DrawingCanvas() {
           )}
           {components.length > 0 && !isAnalyzing && (
             <Badge variant="default">
-              {components.length} component{components.length !== 1 ? 's' : ''}
+              {components.length} component{components.length !== 1 ? "s" : ""}
             </Badge>
           )}
         </div>
@@ -104,7 +104,7 @@ export default function DrawingCanvas() {
         <div ref={previewRef}>
           <PreviewOverlay
             components={components}
-            isVisible={mode === 'preview'}
+            isVisible={mode === "preview"}
           />
         </div>
       </div>

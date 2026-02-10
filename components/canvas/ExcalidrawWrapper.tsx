@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { Excalidraw } from '@excalidraw/excalidraw';
-import { createDebouncer, hashString } from '@/lib/canvas-utils';
+import { Excalidraw } from "@excalidraw/excalidraw";
+import { useCallback, useState } from "react";
+import { createDebouncer, hashString } from "@/lib/canvas-utils";
 
 interface ExcalidrawWrapperProps {
   onAnalyze: (imageData: string, elementsHash: string) => void;
@@ -21,16 +21,18 @@ export default function ExcalidrawWrapper({
 
       try {
         // Get canvas blob
-        const blob = await excalidrawAPI.getSceneElements();
-        const canvas = document.querySelector('.excalidraw canvas') as HTMLCanvasElement;
+        const _blob = await excalidrawAPI.getSceneElements();
+        const canvas = document.querySelector(
+          ".excalidraw canvas",
+        ) as HTMLCanvasElement;
 
         if (!canvas) {
-          console.warn('Canvas element not found');
+          console.warn("Canvas element not found");
           return;
         }
 
         // Convert to base64
-        const imageData = canvas.toDataURL('image/png');
+        const imageData = canvas.toDataURL("image/png");
 
         // Hash elements for deduplication
         const elementsHash = hashString(JSON.stringify(elements));
@@ -38,24 +40,24 @@ export default function ExcalidrawWrapper({
         // Send for analysis
         onAnalyze(imageData, elementsHash);
       } catch (error) {
-        console.error('Failed to capture canvas:', error);
+        console.error("Failed to capture canvas:", error);
       }
     },
-    [excalidrawAPI, onAnalyze]
+    [excalidrawAPI, onAnalyze],
   );
 
   // Create debounced analyzer
   const debouncedAnalyze = useCallback(
     createDebouncer(captureAndAnalyze, 2000),
-    [captureAndAnalyze]
+    [],
   );
 
   const handleChange = useCallback(
-    (elements: readonly any[], appState: any) => {
+    (elements: readonly any[], _appState: any) => {
       if (isAnalyzing) return;
       debouncedAnalyze(elements);
     },
-    [debouncedAnalyze, isAnalyzing]
+    [debouncedAnalyze, isAnalyzing],
   );
 
   return (

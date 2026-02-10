@@ -1,16 +1,16 @@
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import type {
-  GeneratedComponent,
+  ComponentPosition,
   GeminiComponentResponse,
-  ComponentPosition
-} from '@/types/canvas';
+  GeneratedComponent,
+} from "@/types/canvas";
 
 const POSITION_THRESHOLD = 20; // pixels
 
 export function isSimilarPosition(
   pos1: ComponentPosition,
   pos2: ComponentPosition,
-  threshold: number = POSITION_THRESHOLD
+  threshold: number = POSITION_THRESHOLD,
 ): boolean {
   return (
     Math.abs(pos1.x - pos2.x) <= threshold &&
@@ -23,7 +23,7 @@ export function isSimilarPosition(
 export function deduplicateComponents(
   existing: GeneratedComponent[],
   newComponents: GeminiComponentResponse[],
-  sourceDrawingHash: string
+  sourceDrawingHash: string,
 ): GeneratedComponent[] {
   const result: GeneratedComponent[] = [...existing];
   const timestamp = Date.now();
@@ -31,9 +31,9 @@ export function deduplicateComponents(
   for (const newComp of newComponents) {
     // Find similar existing component
     const similarIndex = result.findIndex(
-      existing =>
+      (existing) =>
         existing.type === newComp.type &&
-        isSimilarPosition(existing.position, newComp.position)
+        isSimilarPosition(existing.position, newComp.position),
     );
 
     if (similarIndex >= 0) {
@@ -64,7 +64,7 @@ export function deduplicateComponents(
 export function mergeComponents(
   existing: GeneratedComponent[],
   newComponents: GeminiComponentResponse[],
-  sourceDrawingHash: string
+  sourceDrawingHash: string,
 ): GeneratedComponent[] {
   return deduplicateComponents(existing, newComponents, sourceDrawingHash);
 }

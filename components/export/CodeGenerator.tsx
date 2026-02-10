@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Copy, Download, Check } from 'lucide-react';
-import { generateReactCode } from '@/lib/code-generator';
-import type { GeneratedComponent } from '@/types/canvas';
+import { Check, Copy, Download } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { generateReactCode } from "@/lib/code-generator";
+import type { GeneratedComponent } from "@/types/canvas";
 
 interface CodeGeneratorProps {
   components: GeneratedComponent[];
@@ -22,11 +22,11 @@ export default function CodeGenerator({ components }: CodeGeneratorProps) {
   };
 
   const handleDownload = () => {
-    const blob = new Blob([code], { type: 'text/typescript' });
+    const blob = new Blob([code], { type: "text/typescript" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'generated-ui.tsx';
+    a.download = "generated-ui.tsx";
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -42,8 +42,12 @@ export default function CodeGenerator({ components }: CodeGeneratorProps) {
             onClick={handleCopy}
             className="gap-2"
           >
-            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            {copied ? 'Copied!' : 'Copy'}
+            {copied ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <Copy className="h-4 w-4" />
+            )}
+            {copied ? "Copied!" : "Copy"}
           </Button>
           <Button
             variant="outline"

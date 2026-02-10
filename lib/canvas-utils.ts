@@ -1,6 +1,6 @@
 export function createDebouncer<T extends (...args: any[]) => void>(
   fn: T,
-  delay: number
+  delay: number,
 ): (...args: Parameters<T>) => void {
   let timeoutId: NodeJS.Timeout | null = null;
 
@@ -20,7 +20,7 @@ export function hashString(str: string): string {
 
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32bit integer
   }
 
@@ -28,7 +28,7 @@ export function hashString(str: string): string {
 }
 
 export function captureCanvasAsBase64(
-  canvasElement: HTMLCanvasElement
+  canvasElement: HTMLCanvasElement,
 ): string {
-  return canvasElement.toDataURL('image/png');
+  return canvasElement.toDataURL("image/png");
 }

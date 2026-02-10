@@ -1,4 +1,4 @@
-export type CanvasMode = 'drawing' | 'preview';
+export type CanvasMode = "drawing" | "preview";
 
 export interface ComponentPosition {
   x: number;

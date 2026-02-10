@@ -1,38 +1,42 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Download } from 'lucide-react';
-import { toPng, toSvg } from 'html-to-image';
-import CodeGenerator from './CodeGenerator';
-import type { GeneratedComponent } from '@/types/canvas';
+import { toPng, toSvg } from "html-to-image";
+import { Download } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { GeneratedComponent } from "@/types/canvas";
+import CodeGenerator from "./CodeGenerator";
 
 interface ExportPanelProps {
   components: GeneratedComponent[];
   previewRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export default function ExportPanel({ components, previewRef }: ExportPanelProps) {
+export default function ExportPanel({
+  components,
+  previewRef,
+}: ExportPanelProps) {
   const [isExporting, setIsExporting] = useState(false);
 
-  const handleExportImage = async (format: 'png' | 'svg') => {
+  const handleExportImage = async (format: "png" | "svg") => {
     if (!previewRef.current) return;
 
     setIsExporting(true);
 
     try {
-      const dataUrl = format === 'png'
-        ? await toPng(previewRef.current, { quality: 1.0 })
-        : await toSvg(previewRef.current);
+      const dataUrl =
+        format === "png"
+          ? await toPng(previewRef.current, { quality: 1.0 })
+          : await toSvg(previewRef.current);
 
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = dataUrl;
       a.download = `generated-ui.${format}`;
       a.click();
     } catch (error) {
-      console.error('Failed to export image:', error);
+      console.error("Failed to export image:", error);
     } finally {
       setIsExporting(false);
     }
@@ -42,8 +46,12 @@ export default function ExportPanel({ components, previewRef }: ExportPanelProps
     <Card className="p-4">
       <Tabs defaultValue="code">
         <TabsList className="w-full">
-          <TabsTrigger value="code" className="flex-1">Code</TabsTrigger>
-          <TabsTrigger value="image" className="flex-1">Image</TabsTrigger>
+          <TabsTrigger value="code" className="flex-1">
+            Code
+          </TabsTrigger>
+          <TabsTrigger value="image" className="flex-1">
+            Image
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="code" className="mt-4">
@@ -53,7 +61,7 @@ export default function ExportPanel({ components, previewRef }: ExportPanelProps
         <TabsContent value="image" className="mt-4 space-y-4">
           <div className="flex gap-2">
             <Button
-              onClick={() => handleExportImage('png')}
+              onClick={() => handleExportImage("png")}
               disabled={isExporting || components.length === 0}
               className="flex-1 gap-2"
             >
@@ -61,7 +69,7 @@ export default function ExportPanel({ components, previewRef }: ExportPanelProps
               Export PNG
             </Button>
             <Button
-              onClick={() => handleExportImage('svg')}
+              onClick={() => handleExportImage("svg")}
               disabled={isExporting || components.length === 0}
               variant="outline"
               className="flex-1 gap-2"

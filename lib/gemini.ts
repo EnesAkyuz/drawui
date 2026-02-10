@@ -1,11 +1,13 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import type { GeminiComponentResponse } from '@/types/canvas';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import type { GeminiComponentResponse } from "@/types/canvas";
 
-const apiKey = process.env.GOOGLE_GEMINI_API_KEY || '';
+const apiKey = process.env.GOOGLE_GEMINI_API_KEY || "";
 
 export function getGeminiClient() {
   if (!apiKey) {
-    throw new Error('GOOGLE_GEMINI_API_KEY is not set in environment variables');
+    throw new Error(
+      "GOOGLE_GEMINI_API_KEY is not set in environment variables",
+    );
   }
 
   return new GoogleGenerativeAI(apiKey);
@@ -14,7 +16,7 @@ export function getGeminiClient() {
 export function createGeminiPrompt(availableComponents: string[]): string {
   return `Analyze this UI sketch and identify shadcn/ui components.
 
-Available components: ${availableComponents.join(', ')}
+Available components: ${availableComponents.join(", ")}
 
 Return ONLY valid JSON array format:
 [
@@ -42,7 +44,7 @@ Examples:
 }
 
 export function validateGeminiResponse(
-  response: any
+  response: any,
 ): response is GeminiComponentResponse[] {
   if (!Array.isArray(response)) {
     return false;
@@ -52,32 +54,32 @@ export function validateGeminiResponse(
     return true;
   }
 
-  return response.every(item => {
+  return response.every((item) => {
     return (
-      typeof item.type === 'string' &&
+      typeof item.type === "string" &&
       item.position &&
-      typeof item.position.x === 'number' &&
-      typeof item.position.y === 'number' &&
-      typeof item.position.width === 'number' &&
-      typeof item.position.height === 'number' &&
-      typeof item.props === 'object'
+      typeof item.position.x === "number" &&
+      typeof item.position.y === "number" &&
+      typeof item.position.width === "number" &&
+      typeof item.position.height === "number" &&
+      typeof item.props === "object"
     );
   });
 }
 
 export async function analyzeDrawing(
   base64Image: string,
-  availableComponents: string[]
+  availableComponents: string[],
 ): Promise<GeminiComponentResponse[]> {
   const genAI = getGeminiClient();
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
   const prompt = createGeminiPrompt(availableComponents);
 
   const imagePart = {
     inlineData: {
-      data: base64Image.split(',')[1], // Remove data:image/png;base64, prefix
-      mimeType: 'image/png',
+      data: base64Image.split(",")[1], // Remove data:image/png;base64, prefix
+      mimeType: "image/png",
     },
   };
 
@@ -88,7 +90,7 @@ export async function analyzeDrawing(
   const jsonMatch = text.match(/\[[\s\S]*\]/);
 
   if (!jsonMatch) {
-    console.warn('No JSON found in Gemini response:', text);
+    console.warn("No JSON found in Gemini response:", text);
     return [];
   }
 
@@ -96,13 +98,13 @@ export async function analyzeDrawing(
     const parsed = JSON.parse(jsonMatch[0]);
 
     if (!validateGeminiResponse(parsed)) {
-      console.warn('Invalid Gemini response format:', parsed);
+      console.warn("Invalid Gemini response format:", parsed);
       return [];
     }
 
     return parsed;
   } catch (error) {
-    console.error('Failed to parse Gemini response:', error);
+    console.error("Failed to parse Gemini response:", error);
     return [];
   }
 }

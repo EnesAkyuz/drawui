@@ -1,7 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { analyzeDrawing } from '@/lib/gemini';
-import { getInstalledComponents } from '@/lib/component-registry';
-import type { AnalyzeDrawingRequest, AnalyzeDrawingResponse } from '@/types/canvas';
+import { type NextRequest, NextResponse } from "next/server";
+import { getInstalledComponents } from "@/lib/component-registry";
+import { analyzeDrawing } from "@/lib/gemini";
+import type {
+  AnalyzeDrawingRequest,
+  AnalyzeDrawingResponse,
+} from "@/types/canvas";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,18 +12,19 @@ export async function POST(request: NextRequest) {
 
     if (!body.image) {
       return NextResponse.json(
-        { error: 'Image data is required' },
-        { status: 400 }
+        { error: "Image data is required" },
+        { status: 400 },
       );
     }
 
     // Get available components
-    const availableComponents = body.availableComponents || getInstalledComponents();
+    const availableComponents =
+      body.availableComponents || getInstalledComponents();
 
     if (availableComponents.length === 0) {
       return NextResponse.json(
-        { error: 'No components available' },
-        { status: 500 }
+        { error: "No components available" },
+        { status: 500 },
       );
     }
 
@@ -33,13 +37,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Error analyzing drawing:', error);
+    console.error("Error analyzing drawing:", error);
 
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
 
     return NextResponse.json(
       { error: `Failed to analyze drawing: ${errorMessage}` },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
