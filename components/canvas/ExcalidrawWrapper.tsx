@@ -1,27 +1,38 @@
 "use client";
 
 import { Excalidraw } from "@excalidraw/excalidraw";
-import { useCallback, useState } from "react";
-import { createDebouncer, hashString } from "@/lib/canvas-utils";
+import "@excalidraw/excalidraw/index.css";
+import { useCallback, useRef, useEffect } from "react";
+import { hashString } from "@/lib/canvas-utils";
 
 interface ExcalidrawWrapperProps {
-  onAnalyze: (imageData: string, elementsHash: string) => void;
-  isAnalyzing: boolean;
+  onCapture: (imageData: string, elementsHash: string) => void;
 }
 
 export default function ExcalidrawWrapper({
-  onAnalyze,
-  isAnalyzing,
+  onCapture,
 }: ExcalidrawWrapperProps) {
-  const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
+  const excalidrawAPIRef = useRef<any>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const captureAndAnalyze = useCallback(
     async (elements: readonly any[]) => {
-      if (!excalidrawAPI || elements.length === 0) return;
+      if (elements.length === 0) {
+        console.log("Skipping: no elements");
+        return;
+      }
+
+      const api = excalidrawAPIRef.current;
+      if (!api) {
+        console.log("❌ No Excalidraw API available");
+        return;
+      }
 
       try {
-        // Get canvas blob
-        const _blob = await excalidrawAPI.getSceneElements();
+        console.log("🚀 Starting analysis with", elements.length, "elements");
+        const analysisStart = performance.now();
+
+        // Get canvas
         const canvas = document.querySelector(
           ".excalidraw canvas",
         ) as HTMLCanvasElement;
@@ -31,39 +42,77 @@ export default function ExcalidrawWrapper({
           return;
         }
 
-        // Convert to base64
-        const imageData = canvas.toDataURL("image/png");
+        // Optimize image
+        const maxSize = 800;
+        const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height, 1);
 
-        // Hash elements for deduplication
+        const optimizedCanvas = document.createElement("canvas");
+        optimizedCanvas.width = canvas.width * scale;
+        optimizedCanvas.height = canvas.height * scale;
+
+        const ctx = optimizedCanvas.getContext("2d");
+        if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
+          ctx.drawImage(canvas, 0, 0, optimizedCanvas.width, optimizedCanvas.height);
+        }
+
+        const imageData = optimizedCanvas.toDataURL("image/jpeg", 0.85);
         const elementsHash = hashString(JSON.stringify(elements));
 
-        // Send for analysis
-        onAnalyze(imageData, elementsHash);
+        const captureTime = performance.now() - analysisStart;
+        console.log(`📸 Captured in ${captureTime.toFixed(0)}ms`);
+
+        // Send to parent
+        onCapture(imageData, elementsHash);
       } catch (error) {
         console.error("Failed to capture canvas:", error);
       }
     },
-    [excalidrawAPI, onAnalyze],
-  );
-
-  // Create debounced analyzer
-  const debouncedAnalyze = useCallback(
-    createDebouncer(captureAndAnalyze, 2000),
-    [],
+    [onCapture],
   );
 
   const handleChange = useCallback(
     (elements: readonly any[], _appState: any) => {
-      if (isAnalyzing) return;
-      debouncedAnalyze(elements);
+      if (elements.length === 0) {
+        return;
+      }
+
+      if (!excalidrawAPIRef.current) {
+        return;
+      }
+
+      // Clear existing timer
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+
+      // Set new timer (2 second debounce to capture the latest state)
+      debounceTimerRef.current = setTimeout(() => {
+        captureAndAnalyze(elements);
+      }, 2000);
     },
-    [debouncedAnalyze, isAnalyzing],
+    [captureAndAnalyze],
   );
+
+  const handleExcalidrawAPI = useCallback((api: any) => {
+    console.log("✅ Excalidraw API initialized");
+    excalidrawAPIRef.current = api;
+  }, []);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="w-full h-full">
       <Excalidraw
-        excalidrawAPI={(api) => setExcalidrawAPI(api)}
+        excalidrawAPI={handleExcalidrawAPI}
         onChange={handleChange}
         theme="dark"
       />

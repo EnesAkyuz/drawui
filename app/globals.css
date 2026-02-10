@@ -137,6 +137,8 @@
 /* Ensure Excalidraw renders in dark mode */
 .excalidraw.theme--dark {
   @apply bg-background;
+  --island-bg-color: transparent;
+  --shadow-island: none;
 }
 
 /* Export preview styles */
