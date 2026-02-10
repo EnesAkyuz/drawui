@@ -124,3 +124,22 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Canvas specific styles */
+.excalidraw {
+  @apply w-full h-full;
+}
+
+.excalidraw .App-menu_top {
+  @apply bg-card;
+}
+
+/* Ensure Excalidraw renders in dark mode */
+.excalidraw.theme--dark {
+  @apply bg-background;
+}
+
+/* Export preview styles */
+.preview-container {
+  @apply bg-background;
+}
