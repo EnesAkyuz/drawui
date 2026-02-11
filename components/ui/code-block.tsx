@@ -13,7 +13,11 @@ interface CodeBlockProps {
   filename?: string;
 }
 
-export const CodeBlock = memo(function CodeBlock({ code, language = "tsx", filename = "GeneratedWebsite.tsx" }: CodeBlockProps) {
+export const CodeBlock = memo(function CodeBlock({
+  code,
+  language = "tsx",
+  filename = "GeneratedWebsite.tsx",
+}: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -49,7 +53,9 @@ export const CodeBlock = memo(function CodeBlock({ code, language = "tsx", filen
   return (
     <div className="relative group">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-muted-foreground font-mono">{filename}</span>
+        <span className="text-xs text-muted-foreground font-mono">
+          {filename}
+        </span>
         <div className="flex gap-2">
           <Button
             variant="ghost"

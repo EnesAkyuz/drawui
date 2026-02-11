@@ -4,7 +4,7 @@
 
 ✅ Excalidraw canvas integration
 ✅ Debounced AI detection (2s delay)
-✅ Google Gemini Vision API integration (gemini-2.0-flash-exp)
+✅ Google Gemini Vision API integration (gemini-3-flash-preview)
 ✅ Component deduplication logic
 ✅ Drawing mode and Preview mode
 ✅ Code export (copy/download)
@@ -136,7 +136,7 @@ Comprehensive type definitions in `types/canvas.ts`:
 
 - Debounce delay: 2000ms (configurable)
 - Position threshold: 20px (configurable)
-- AI model: gemini-2.0-flash-exp (fast inference)
+- AI model: gemini-3-flash-preview (fast inference)
 - Image format: PNG base64
 - Component registry: Client-side static imports
 

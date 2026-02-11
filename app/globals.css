@@ -132,6 +132,7 @@
 
 .excalidraw .App-menu_top {
   @apply bg-card;
+  background-color: transparent;
 }
 
 /* Ensure Excalidraw renders in dark mode */

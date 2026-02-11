@@ -615,7 +615,7 @@ export async function analyzeDrawing(
   availableComponents: string[]
 ): Promise<GeminiComponentResponse[]> {
   const genAI = getGeminiClient();
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
 
   const prompt = createGeminiPrompt(availableComponents);
 

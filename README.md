@@ -54,7 +54,7 @@ Convert freehand drawings into production-ready React UI components using AI.
 
 - **Frontend:** Next.js 16, React 19, TypeScript
 - **Canvas:** Excalidraw
-- **AI:** Google Gemini Vision API (gemini-2.0-flash-exp)
+- **AI:** Google Gemini Vision API (gemini-3-flash-preview)
 - **UI:** shadcn/ui, Radix UI, Tailwind CSS v4
 - **Testing:** Vitest, jsdom
 - **Package Manager:** Bun

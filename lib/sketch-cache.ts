@@ -20,13 +20,13 @@ interface CacheEntry {
 // Simple hash function for images
 export function hashImage(base64Image: string): string {
   // Use the first and last parts of the base64 string for a quick hash
-  const data = base64Image.split(',')[1] || base64Image;
+  const data = base64Image.split(",")[1] || base64Image;
   const sample = data.slice(0, 100) + data.slice(-100);
 
   let hash = 0;
   for (let i = 0; i < sample.length; i++) {
     const char = sample.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32bit integer
   }
 
@@ -38,7 +38,7 @@ export function createCacheKey(
   imageHash: string,
   styleGuide: string,
   customPrompt: string,
-  colorPalette: any
+  colorPalette: any,
 ): string {
   const paletteStr = JSON.stringify(colorPalette);
   return `${imageHash}:${styleGuide}:${customPrompt}:${paletteStr}`;
@@ -60,11 +60,11 @@ class SketchCache {
       return null;
     }
 
-    console.log('🎯 Cache hit! Using cached result');
+    console.log("🎯 Cache hit! Using cached result");
     return entry.code;
   }
 
-  set(key: string, entry: Omit<CacheEntry, 'timestamp'>) {
+  set(key: string, entry: Omit<CacheEntry, "timestamp">) {
     // Enforce max size (LRU eviction)
     if (this.cache.size >= this.maxSize) {
       const firstKey = this.cache.keys().next().value;
@@ -96,13 +96,16 @@ class SketchCache {
 export const sketchCache = new SketchCache();
 
 // Cleanup expired entries periodically
-if (typeof window !== 'undefined') {
-  setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of (sketchCache as any).cache.entries()) {
-      if (now - entry.timestamp > (sketchCache as any).maxAge) {
-        (sketchCache as any).cache.delete(key);
+if (typeof window !== "undefined") {
+  setInterval(
+    () => {
+      const now = Date.now();
+      for (const [key, entry] of (sketchCache as any).cache.entries()) {
+        if (now - entry.timestamp > (sketchCache as any).maxAge) {
+          (sketchCache as any).cache.delete(key);
+        }
       }
-    }
-  }, 5 * 60 * 1000); // Every 5 minutes
+    },
+    5 * 60 * 1000,
+  ); // Every 5 minutes
 }

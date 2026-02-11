@@ -21,11 +21,12 @@ export function createWebsitePrompt(
     accent: string;
     background: string;
     text: string;
-  }
+  },
 ): string {
-  const styleInstructions = styleGuide ? `\n🎨 STYLE GUIDE: ${styleGuide}` : '';
+  const styleInstructions = styleGuide ? `\n🎨 STYLE GUIDE: ${styleGuide}` : "";
 
-  const colorInstructions = colorPalette ? `
+  const colorInstructions = colorPalette
+    ? `
 🎨 COLOR PALETTE (Use these exact colors):
 - Primary: ${colorPalette.primary}
 - Secondary: ${colorPalette.secondary}
@@ -33,74 +34,122 @@ export function createWebsitePrompt(
 - Background: ${colorPalette.background}
 - Text: ${colorPalette.text}
 
-Map these colors to Tailwind classes appropriately (e.g., use arbitrary values like bg-[${colorPalette.primary}])` : '';
+Map these colors to Tailwind classes appropriately (e.g., use arbitrary values like bg-[${colorPalette.primary}])`
+    : "";
 
-  const customInstructions = customPrompt ? `\n\n📝 CUSTOM INSTRUCTIONS:\n${customPrompt}` : '';
+  const customInstructions = customPrompt
+    ? `\n\n📝 CUSTOM INSTRUCTIONS:\n${customPrompt}`
+    : "";
 
-  return `You are an expert web designer. Look at this sketch and create a COMPLETE, beautiful webpage that FAITHFULLY reproduces the layout.
+  return `You convert hand-drawn sketches into real, polished React UI components.
 ${styleInstructions}${colorInstructions}${customInstructions}
 
-🎨 YOUR MISSION:
-Create a full React/JSX component that accurately recreates this sketch's layout and structure.
+🎯 YOUR MISSION:
+Turn this sketch into a REAL, USABLE webpage component. Follow the sketch's layout and structure closely, but make it look like a finished product — not a wireframe.
 
-✨ DESIGN REQUIREMENTS:
-- STAY TRUE to the sketch layout - don't add extra sections or rearrange things
-- Match the number of elements in the sketch (if there are 3 boxes, make 3 boxes)
-- Preserve the relative positions and sizes from the sketch
-- Use Tailwind CSS for styling to make it look polished and modern
-- Use real, compelling content (NO "Lorem ipsum"!)
-- Add subtle gradients, shadows, and polish but keep the structure intact
+⚖️ THE BALANCE — THIS IS KEY:
+- KEEP the sketch's layout, element positions, groupings, and proportions
+- KEEP the number and type of elements the user drew
+- KEEP any text the user wrote (verbatim or best-guess if handwriting is unclear)
+- BUT bring it to life — raw rectangles become styled cards with titles, descriptions, and icons. Empty circles become avatars. Lines become separators. A bar at the top becomes a real navbar with links.
+- Think of the sketch as a WIREFRAME. Your job is to turn the wireframe into the FINAL UI. Same structure, but polished and filled with realistic content.
+
+🧠 HOW TO INTERPRET SHAPES:
+- Rectangle/box → Card, container, image placeholder, section, or panel (infer from context)
+- Small rectangle inside a larger one → Button, input field, or nested card
+- Circle → Avatar, icon container, or profile picture
+- Line → Separator, border, or divider
+- Bar at top → Navigation bar / header
+- Bar at bottom → Footer
+- Sidebar rectangle → Sidebar navigation
+- Grid of boxes → Card grid, feature grid, gallery, or product listing
+- Text scribbles → Headings, paragraphs, labels (interpret the intent)
+- Arrows → Flow direction, navigation, or call-to-action indicators
+- Stars/shapes → Ratings, icons, or decorative elements
+
+📐 LAYOUT RULES:
+1. Study the sketch's spatial layout FIRST before writing code
+2. Elements in a row → flex-row
+3. Elements stacked → flex-col
+4. Grid of items → CSS grid matching the column count drawn
+5. Preserve relative positions — top-left stays top-left, centered stays centered
+6. Match proportions — if sidebar is ~1/4 width, use w-1/4 or similar
+7. Full page layout → create full page. Single component → create that component
+
+📝 CONTENT RULES:
+1. Use the user's written text EXACTLY when legible
+2. For unclear text, make a sensible guess from context
+3. Labeled boxes ("Header", "Card", "Nav") → create those exact elements
+4. Fill empty elements with SHORT, REALISTIC content that fits the context — a card should have a title, a brief description, maybe an icon. A navbar should have realistic links. A form should have proper labels.
+5. NO Lorem ipsum — use real-sounding content
+6. Add appropriate lucide-react icons to elements where they naturally belong (nav items, card headers, buttons, list items)
+
+🎨 STYLING APPROACH:
+- Clean, modern, professional — like a real production app
+- Use a cohesive color scheme (neutral backgrounds, clear hierarchy)
+- Proper spacing, typography, and visual hierarchy
+- Subtle shadows and borders to create depth
+- Rounded corners on cards and buttons
+- Hover states on interactive elements
+- Use shadcn/ui components — they give a polished look out of the box
+- framer-motion: use for subtle entrance animations (fade-in, slight slide-up) — nothing flashy
+
+🚫 DO NOT:
+- Rearrange the layout into something different from the sketch
+- Add entire new sections the user didn't draw
+- Turn a simple sketch into an over-the-top marketing page
+- Use excessive gradients, glassmorphism, or visual effects
+- Make it look completely different from what was drawn
 
 💻 CODE REQUIREMENTS:
-- Return a COMPLETE React functional component
-- NO COMMENTS in the code (no // or /* */ comments anywhere)
-- Use Tailwind CSS classes only (no custom CSS)
-- Component should be self-contained and production-ready
-- Make it responsive (mobile-first)
+- "use client" at the top
+- export default function Component()
+- Tailwind CSS for styling
+- shadcn/ui components for UI elements
+- lucide-react for icons
+- framer-motion for subtle animations
+- NO comments in the code
+- Must compile without errors — properly closed JSX, correct imports
+- Responsive
 
-📐 INTERPRET THE SKETCH:
-- Rectangles → Sections, cards, buttons, or containers (keep the same layout)
-- Text → Headlines, CTAs, navigation, or descriptions (in the same positions)
-- Grouped elements → Navigation bars, feature grids, or forms (preserve grouping)
-- Match the vertical flow of the sketch (top to bottom)
-- Match the horizontal arrangement (left, center, right alignment)
+📦 AVAILABLE SHADCN/UI COMPONENTS:
+- Button: import { Button } from "@/components/ui/button"
+- Input: import { Input } from "@/components/ui/input"
+- Label: import { Label } from "@/components/ui/label"
+- Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription: from "@/components/ui/card"
+- Tabs, TabsList, TabsTrigger, TabsContent: from "@/components/ui/tabs"
+- Select, SelectTrigger, SelectValue, SelectContent, SelectItem: from "@/components/ui/select"
+- Checkbox: from "@/components/ui/checkbox"
+- Switch: from "@/components/ui/switch"
+- Textarea: from "@/components/ui/textarea"
+- Badge: from "@/components/ui/badge"
+- Avatar, AvatarImage, AvatarFallback: from "@/components/ui/avatar"
+- Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle: from "@/components/ui/dialog"
+- Separator: from "@/components/ui/separator"
+- Progress: from "@/components/ui/progress"
+- Accordion, AccordionItem, AccordionTrigger, AccordionContent: from "@/components/ui/accordion"
+- Sheet, SheetTrigger, SheetContent: from "@/components/ui/sheet"
+- DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem: from "@/components/ui/dropdown-menu"
+- Tooltip, TooltipTrigger, TooltipContent, TooltipProvider: from "@/components/ui/tooltip"
+- ScrollArea: from "@/components/ui/scroll-area"
+- Slider: from "@/components/ui/slider"
+- RadioGroup, RadioGroupItem: from "@/components/ui/radio-group"
+- Table, TableHeader, TableBody, TableRow, TableHead, TableCell: from "@/components/ui/table"
+- NavigationMenu: from "@/components/ui/navigation-menu"
+- Alert, AlertTitle, AlertDescription: from "@/components/ui/alert"
+- Skeleton: from "@/components/ui/skeleton"
 
-🎯 EXAMPLE OUTPUT (NO COMMENTS):
+🔥 CRITICAL RULES:
+1. ALWAYS start with "use client"
+2. Return ONLY TSX code wrapped in \`\`\`tsx and \`\`\` markers
+3. NO comments in code
+4. NO explanations outside the code block
+5. Component name MUST be "Component" (export default function Component)
+6. All JSX tags, braces, and parentheses MUST be properly closed
+7. Code MUST compile without syntax errors
+8. Same layout as the sketch, but make it look like a REAL finished webpage
 
-\`\`\`tsx
-export default function GeneratedWebsite() {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
-      <div className="container mx-auto px-6 py-20">
-        <h1 className="text-6xl font-bold text-center bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-          Ship Products 10x Faster
-        </h1>
-        <p className="text-xl text-gray-300 text-center mt-6 max-w-2xl mx-auto">
-          Build stunning websites with AI-powered tools that understand your vision
-        </p>
-        <div className="flex gap-4 justify-center mt-12">
-          <button className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-semibold text-lg shadow-2xl hover:shadow-purple-500/50 hover:scale-105 transition-all">
-            Get Started Free →
-          </button>
-          <button className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white rounded-lg font-semibold text-lg border border-white/20 hover:bg-white/20 transition-all">
-            Learn More
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-\`\`\`
-
-CRITICAL RULES:
-- Return ONLY the TSX code wrapped in \`\`\`tsx and \`\`\` markers
-- ABSOLUTELY NO COMMENTS in the code (no // or /* */)
-- NO explanations, NO notes, NO markdown outside the code block
-- Component name MUST be "GeneratedWebsite"
-- STAY FAITHFUL to the sketch layout - don't invent new sections
-- Make it beautiful but keep the structure from the sketch
-
-Now, analyze the sketch and generate the code:`;
+Now look at the sketch and convert it into a polished UI. Same structure, real content, production quality.`;
 }
 
 export async function generateWebsite(
@@ -113,16 +162,16 @@ export async function generateWebsite(
     accent: string;
     background: string;
     text: string;
-  }
+  },
 ): Promise<string> {
   const genAI = getGeminiClient();
   const model = genAI.getGenerativeModel({
     model: "gemini-3-flash-preview",
     generationConfig: {
-      temperature: 0.8, // High creativity
+      temperature: 1.0, // Maximum creativity for stunning designs
       topP: 0.95,
-      topK: 40,
-    }
+      topK: 64,
+    },
   });
 
   const prompt = createWebsitePrompt(styleGuide, customPrompt, colorPalette);
@@ -153,10 +202,9 @@ export async function generateWebsite(
 
   // Strip out all comments to prevent rendering issues
   code = code
-    .replace(/\/\*[\s\S]*?\*\//g, '') // Remove /* */ comments
-    .replace(/\/\/.*/g, '') // Remove // comments
-    .replace(/^\s*[\r\n]/gm, ''); // Remove empty lines
+    .replace(/\/\*[\s\S]*?\*\//g, "") // Remove /* */ comments
+    .replace(/\/\/.*/g, "") // Remove // comments
+    .replace(/^\s*[\r\n]/gm, ""); // Remove empty lines
 
   return code;
 }
-

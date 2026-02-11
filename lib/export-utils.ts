@@ -6,7 +6,10 @@ interface ExportOptions {
 }
 
 // Export to CodeSandbox
-export async function exportToCodeSandbox({ code, componentName = "GeneratedWebsite" }: ExportOptions) {
+export async function exportToCodeSandbox({
+  code,
+  componentName = "GeneratedWebsite",
+}: ExportOptions) {
   const files = {
     "package.json": {
       content: {
@@ -14,13 +17,13 @@ export async function exportToCodeSandbox({ code, componentName = "GeneratedWebs
         version: "1.0.0",
         description: "Exported from DrawUI",
         dependencies: {
-          "react": "^19.0.0",
+          react: "^19.0.0",
           "react-dom": "^19.0.0",
-          "tailwindcss": "^4.0.0",
+          tailwindcss: "^4.0.0",
         },
         devDependencies: {
           "@vitejs/plugin-react": "^4.0.0",
-          "vite": "^5.0.0",
+          vite: "^5.0.0",
         },
       },
     },
@@ -116,7 +119,7 @@ export async function exportToStackBlitz({ code }: ExportOptions) {
           },
         },
         null,
-        2
+        2,
       ),
       "index.html": `<!DOCTYPE html>
 <html lang="en">
@@ -240,7 +243,7 @@ export function exportAsProject({ code }: ExportOptions) {
         },
       },
       null,
-      2
+      2,
     ),
     "index.html": `<!DOCTYPE html>
 <html lang="en">
@@ -289,7 +292,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         include: ["src"],
       },
       null,
-      2
+      2,
     ),
     "vite.config.ts": `import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';

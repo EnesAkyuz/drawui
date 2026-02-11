@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 /**
  * Custom hook for managing focus within a component
@@ -16,17 +16,19 @@ export function useFocusTrap(isActive: boolean) {
 
     // Get all focusable elements
     const focusableElements = containerRef.current.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     );
 
     const firstElement = focusableElements[0] as HTMLElement;
-    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+    const lastElement = focusableElements[
+      focusableElements.length - 1
+    ] as HTMLElement;
 
     // Focus the first element
     firstElement?.focus();
 
     const handleTab = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
+      if (e.key !== "Tab") return;
 
       if (e.shiftKey) {
         // Shift + Tab
@@ -44,17 +46,17 @@ export function useFocusTrap(isActive: boolean) {
     };
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         previousFocusRef.current?.focus();
       }
     };
 
-    document.addEventListener('keydown', handleTab);
-    document.addEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleTab);
+    document.addEventListener("keydown", handleEscape);
 
     return () => {
-      document.removeEventListener('keydown', handleTab);
-      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener("keydown", handleTab);
+      document.removeEventListener("keydown", handleEscape);
 
       // Restore focus when deactivating
       previousFocusRef.current?.focus();

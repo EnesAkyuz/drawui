@@ -7,16 +7,16 @@ const nextConfig: NextConfig = {
 
   // Image optimization
   images: {
-    formats: ['image/avif', 'image/webp'],
+    formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60,
   },
 
   // Experimental features for better performance
   experimental: {
     optimizePackageImports: [
-      'lucide-react',
-      'react-syntax-highlighter',
-      '@excalidraw/excalidraw',
+      "lucide-react",
+      "react-syntax-highlighter",
+      "@excalidraw/excalidraw",
     ],
   },
 

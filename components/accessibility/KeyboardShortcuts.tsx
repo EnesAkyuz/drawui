@@ -20,11 +20,31 @@ interface Shortcut {
 
 const shortcuts: Shortcut[] = [
   { keys: ["Ctrl", "Z"], description: "Undo last generation", action: "undo" },
-  { keys: ["Ctrl", "Shift", "Z"], description: "Redo generation", action: "redo" },
-  { keys: ["Ctrl", "Enter"], description: "Generate website", action: "generate" },
-  { keys: ["Ctrl", "E"], description: "Toggle preview mode", action: "togglePreview" },
-  { keys: ["Ctrl", "H"], description: "Toggle history panel", action: "toggleHistory" },
-  { keys: ["Ctrl", "K"], description: "Toggle code panel", action: "toggleCode" },
+  {
+    keys: ["Ctrl", "Shift", "Z"],
+    description: "Redo generation",
+    action: "redo",
+  },
+  {
+    keys: ["Ctrl", "Enter"],
+    description: "Generate website",
+    action: "generate",
+  },
+  {
+    keys: ["Ctrl", "E"],
+    description: "Toggle preview mode",
+    action: "togglePreview",
+  },
+  {
+    keys: ["Ctrl", "H"],
+    description: "Toggle history panel",
+    action: "toggleHistory",
+  },
+  {
+    keys: ["Ctrl", "K"],
+    description: "Toggle code panel",
+    action: "toggleCode",
+  },
   { keys: ["Ctrl", "S"], description: "Export code", action: "export" },
   { keys: ["?"], description: "Show keyboard shortcuts", action: "help" },
   { keys: ["Esc"], description: "Close dialogs", action: "close" },
@@ -48,47 +68,47 @@ export function KeyboardShortcuts({ onShortcut }: KeyboardShortcutsProps) {
       const ctrl = e.ctrlKey || e.metaKey;
 
       // Help dialog
-      if (e.key === '?') {
+      if (e.key === "?") {
         e.preventDefault();
-        onShortcut?.('help');
+        onShortcut?.("help");
         return;
       }
 
       if (!ctrl) return;
 
       // Generate
-      if (e.key === 'Enter') {
+      if (e.key === "Enter") {
         e.preventDefault();
-        onShortcut?.('generate');
+        onShortcut?.("generate");
       }
 
       // Toggle preview
-      if (e.key === 'e') {
+      if (e.key === "e") {
         e.preventDefault();
-        onShortcut?.('togglePreview');
+        onShortcut?.("togglePreview");
       }
 
       // Toggle history
-      if (e.key === 'h') {
+      if (e.key === "h") {
         e.preventDefault();
-        onShortcut?.('toggleHistory');
+        onShortcut?.("toggleHistory");
       }
 
       // Toggle code
-      if (e.key === 'k') {
+      if (e.key === "k") {
         e.preventDefault();
-        onShortcut?.('toggleCode');
+        onShortcut?.("toggleCode");
       }
 
       // Export
-      if (e.key === 's') {
+      if (e.key === "s") {
         e.preventDefault();
-        onShortcut?.('export');
+        onShortcut?.("export");
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onShortcut]);
 
   return (

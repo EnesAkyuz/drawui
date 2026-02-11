@@ -11,7 +11,7 @@ export class RateLimiter {
   canMakeRequest(): boolean {
     const now = Date.now();
     // Remove requests outside the time window
-    this.requests = this.requests.filter(time => now - time < this.windowMs);
+    this.requests = this.requests.filter((time) => now - time < this.windowMs);
 
     return this.requests.length < this.maxRequests;
   }
@@ -22,7 +22,7 @@ export class RateLimiter {
 
   getRemainingRequests(): number {
     const now = Date.now();
-    this.requests = this.requests.filter(time => now - time < this.windowMs);
+    this.requests = this.requests.filter((time) => now - time < this.windowMs);
     return Math.max(0, this.maxRequests - this.requests.length);
   }
 
@@ -36,7 +36,7 @@ export class RateLimiter {
 
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
-  wait: number
+  wait: number,
 ): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout | null = null;
 

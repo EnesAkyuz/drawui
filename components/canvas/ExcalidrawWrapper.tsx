@@ -2,6 +2,7 @@
 
 import { Excalidraw } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
+import "@/app/excalidraw-custom.css";
 import { useCallback, useRef, useEffect } from "react";
 import { hashString } from "@/lib/canvas-utils";
 
@@ -44,7 +45,11 @@ export default function ExcalidrawWrapper({
 
         // Optimize image
         const maxSize = 800;
-        const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height, 1);
+        const scale = Math.min(
+          maxSize / canvas.width,
+          maxSize / canvas.height,
+          1,
+        );
 
         const optimizedCanvas = document.createElement("canvas");
         optimizedCanvas.width = canvas.width * scale;
@@ -54,7 +59,13 @@ export default function ExcalidrawWrapper({
         if (ctx) {
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = "high";
-          ctx.drawImage(canvas, 0, 0, optimizedCanvas.width, optimizedCanvas.height);
+          ctx.drawImage(
+            canvas,
+            0,
+            0,
+            optimizedCanvas.width,
+            optimizedCanvas.height,
+          );
         }
 
         const imageData = optimizedCanvas.toDataURL("image/jpeg", 0.85);
@@ -115,6 +126,18 @@ export default function ExcalidrawWrapper({
         excalidrawAPI={handleExcalidrawAPI}
         onChange={handleChange}
         theme="dark"
+        UIOptions={{
+          canvasActions: {
+            loadScene: false,
+            saveAsImage: false,
+            export: false,
+            saveToActiveFile: false,
+            toggleTheme: false,
+          },
+        }}
+        initialData={{
+          libraryItems: [],
+        }}
       />
     </div>
   );

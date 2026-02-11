@@ -1,7 +1,7 @@
-import { useState, useCallback, useEffect } from 'react';
-import type { GenerationHistoryEntry } from '@/types/history';
+import { useState, useCallback, useEffect } from "react";
+import type { GenerationHistoryEntry } from "@/types/history";
 
-const STORAGE_KEY = 'drawui_generation_history';
+const STORAGE_KEY = "drawui_generation_history";
 const MAX_ENTRIES = 20;
 
 export function useGenerationHistory() {
@@ -18,7 +18,7 @@ export function useGenerationHistory() {
         setCurrentIndex(parsed.length - 1);
       }
     } catch (error) {
-      console.error('Failed to load history:', error);
+      console.error("Failed to load history:", error);
     }
   }, []);
 
@@ -28,63 +28,75 @@ export function useGenerationHistory() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
       } catch (error) {
-        console.error('Failed to save history:', error);
+        console.error("Failed to save history:", error);
       }
     }
   }, [entries]);
 
-  const addEntry = useCallback((entry: Omit<GenerationHistoryEntry, 'id' | 'timestamp'>) => {
-    const newEntry: GenerationHistoryEntry = {
-      ...entry,
-      id: `gen_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: Date.now(),
-    };
+  const addEntry = useCallback(
+    (entry: Omit<GenerationHistoryEntry, "id" | "timestamp">) => {
+      const newEntry: GenerationHistoryEntry = {
+        ...entry,
+        id: `gen_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        timestamp: Date.now(),
+      };
 
-    setEntries(prev => {
-      const newEntries = [...prev, newEntry];
-      // Keep only the last MAX_ENTRIES
-      if (newEntries.length > MAX_ENTRIES) {
-        return newEntries.slice(-MAX_ENTRIES);
+      setEntries((prev) => {
+        const newEntries = [...prev, newEntry];
+        // Keep only the last MAX_ENTRIES
+        if (newEntries.length > MAX_ENTRIES) {
+          return newEntries.slice(-MAX_ENTRIES);
+        }
+        return newEntries;
+      });
+
+      setCurrentIndex((prev) => {
+        const newLength = Math.min(entries.length + 1, MAX_ENTRIES);
+        return newLength - 1;
+      });
+
+      return newEntry.id;
+    },
+    [entries.length],
+  );
+
+  const goToEntry = useCallback(
+    (index: number) => {
+      if (index >= 0 && index < entries.length) {
+        setCurrentIndex(index);
+        return entries[index];
       }
-      return newEntries;
-    });
+      return null;
+    },
+    [entries],
+  );
 
-    setCurrentIndex(prev => {
-      const newLength = Math.min(entries.length + 1, MAX_ENTRIES);
-      return newLength - 1;
-    });
-
-    return newEntry.id;
-  }, [entries.length]);
-
-  const goToEntry = useCallback((index: number) => {
-    if (index >= 0 && index < entries.length) {
-      setCurrentIndex(index);
-      return entries[index];
-    }
-    return null;
-  }, [entries]);
-
-  const goToEntryById = useCallback((id: string) => {
-    const index = entries.findIndex(e => e.id === id);
-    if (index !== -1) {
-      setCurrentIndex(index);
-      return entries[index];
-    }
-    return null;
-  }, [entries]);
-
-  const deleteEntry = useCallback((id: string) => {
-    setEntries(prev => {
-      const filtered = prev.filter(e => e.id !== id);
-      // Adjust current index if needed
-      const deletedIndex = prev.findIndex(e => e.id === id);
-      if (deletedIndex !== -1 && deletedIndex <= currentIndex) {
-        setCurrentIndex(Math.max(0, currentIndex - 1));
+  const goToEntryById = useCallback(
+    (id: string) => {
+      const index = entries.findIndex((e) => e.id === id);
+      if (index !== -1) {
+        setCurrentIndex(index);
+        return entries[index];
       }
-      return filtered;
-    });
-  }, [currentIndex]);
+      return null;
+    },
+    [entries],
+  );
+
+  const deleteEntry = useCallback(
+    (id: string) => {
+      setEntries((prev) => {
+        const filtered = prev.filter((e) => e.id !== id);
+        // Adjust current index if needed
+        const deletedIndex = prev.findIndex((e) => e.id === id);
+        if (deletedIndex !== -1 && deletedIndex <= currentIndex) {
+          setCurrentIndex(Math.max(0, currentIndex - 1));
+        }
+        return filtered;
+      });
+    },
+    [currentIndex],
+  );
 
   const clearHistory = useCallback(() => {
     setEntries([]);

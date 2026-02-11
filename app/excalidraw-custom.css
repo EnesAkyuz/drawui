@@ -1,0 +1,9 @@
+/* Hide library menu on right */
+.excalidraw .layer-ui__wrapper__top-right {
+  display: none !important;
+}
+
+/* Hide main menu on left */
+.excalidraw .App-menu_top__left {
+  display: none !important;
+}

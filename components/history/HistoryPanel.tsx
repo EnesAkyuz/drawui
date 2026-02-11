@@ -57,7 +57,7 @@ export function HistoryPanel({
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Just now';
+    if (diffMins < 1) return "Just now";
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
@@ -136,8 +136,8 @@ export function HistoryPanel({
                     <AlertDialogHeader>
                       <AlertDialogTitle>Clear all history?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will permanently delete all {entries.length} saved generations.
-                        This action cannot be undone.
+                        This will permanently delete all {entries.length} saved
+                        generations. This action cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -173,7 +173,9 @@ export function HistoryPanel({
                     <div
                       key={entry.id}
                       className={`group relative border rounded-lg p-3 cursor-pointer transition-all hover:shadow-md ${
-                        isActive ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'hover:border-primary/50'
+                        isActive
+                          ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                          : "hover:border-primary/50"
                       }`}
                       onClick={() => onSelectEntry(entry.id)}
                     >
@@ -226,14 +228,16 @@ export function HistoryPanel({
                               {entry.generationTime.toFixed(1)}s
                             </Badge>
                             <div className="flex gap-0.5">
-                              {Object.entries(entry.colorPalette).slice(0, 3).map(([key, color]) => (
-                                <div
-                                  key={key}
-                                  className="w-4 h-5 rounded-sm border"
-                                  style={{ backgroundColor: color }}
-                                  title={`${key}: ${color}`}
-                                />
-                              ))}
+                              {Object.entries(entry.colorPalette)
+                                .slice(0, 3)
+                                .map(([key, color]) => (
+                                  <div
+                                    key={key}
+                                    className="w-4 h-5 rounded-sm border"
+                                    style={{ backgroundColor: color }}
+                                    title={`${key}: ${color}`}
+                                  />
+                                ))}
                             </div>
                           </div>
                         </div>
