@@ -1,11 +1,15 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Eye, Loader2, Pencil, Palette, Sparkles, AlertCircle, Code2 } from "lucide-react";
-import { useCallback, useState, useMemo, useEffect } from "react";
+import { Eye, Loader2, Pencil, Palette, Sparkles, AlertCircle, Code2, Columns2 } from "lucide-react";
+import { useCallback, useState, useMemo, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useGenerationHistory } from "@/hooks/use-generation-history";
+import { HistoryPanel } from "@/components/history/HistoryPanel";
+import { ExportMenu } from "@/components/export/ExportMenu";
+import { KeyboardShortcuts } from "@/components/accessibility/KeyboardShortcuts";
 import {
   Select,
   SelectContent,
@@ -24,9 +28,12 @@ import {
 } from "@/components/ui/dialog";
 import SimplePreview from "./SimplePreview";
 import { CodeBlock } from "@/components/ui/code-block";
+import { DevicePreview } from "@/components/preview/DevicePreview";
+import { ComparisonView } from "@/components/preview/ComparisonView";
 import type { CanvasMode } from "@/types/canvas";
 import { compressImage, estimateImageSize, formatBytes } from "@/lib/image-utils";
 import { RateLimiter, debounce } from "@/lib/rate-limiter";
+import { sketchCache, hashImage, createCacheKey } from "@/lib/sketch-cache";
 
 const COLOR_PALETTES = {
   "Ocean Blue": {
@@ -90,8 +97,11 @@ const ExcalidrawWrapper = dynamic(() => import("./ExcalidrawWrapper"), {
   ),
 });
 
+type PreviewMode = "simple" | "device" | "comparison";
+
 export default function DrawingCanvas() {
   const [mode, setMode] = useState<CanvasMode>("drawing");
+  const [previewMode, setPreviewMode] = useState<PreviewMode>("simple");
   const [generatedCode, setGeneratedCode] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
@@ -110,6 +120,10 @@ export default function DrawingCanvas() {
 
   // Rate limiter: 5 requests per minute
   const rateLimiter = useMemo(() => new RateLimiter(5, 60000), []);
+
+  // Generation history
+  const history = useGenerationHistory();
+  const generationStartTime = useRef<number>(0);
 
   // Capture and compress image data
   const handleCapture = useCallback(
@@ -146,6 +160,31 @@ export default function DrawingCanvas() {
       return;
     }
 
+    // Check cache first
+    const imageHash = hashImage(pendingImageData);
+    const cacheKey = createCacheKey(imageHash, styleGuide, customPrompt, colorPalette);
+    const cachedCode = sketchCache.get(cacheKey);
+
+    if (cachedCode) {
+      setGeneratedCode(cachedCode);
+      setMode("preview");
+      toast.success("Loaded from cache!", {
+        description: "Identical sketch found"
+      });
+
+      // Still add to history
+      history.addEntry({
+        code: cachedCode,
+        thumbnail: pendingImageData,
+        styleGuide,
+        customPrompt,
+        colorPalette,
+        generationTime: 0,
+      });
+
+      return;
+    }
+
     // Check rate limit
     if (!rateLimiter.canMakeRequest()) {
       const resetTime = Math.ceil(rateLimiter.getResetTime() / 1000);
@@ -155,7 +194,7 @@ export default function DrawingCanvas() {
       return;
     }
 
-    const startTime = performance.now();
+    generationStartTime.current = performance.now();
     setIsAnalyzing(true);
 
     // Record the request
@@ -185,15 +224,34 @@ export default function DrawingCanvas() {
       }
 
       const endTime = performance.now();
-      const duration = ((endTime - startTime) / 1000).toFixed(2);
+      const duration = (endTime - generationStartTime.current) / 1000;
 
-      console.log(`🎨 Website generated in ${duration}s`);
+      console.log(`🎨 Website generated in ${duration.toFixed(2)}s`);
 
       if (data.code) {
         setGeneratedCode(data.code);
         setMode("preview");
+
+        // Cache the result
+        sketchCache.set(cacheKey, {
+          code: data.code,
+          styleGuide,
+          customPrompt,
+          colorPalette,
+        });
+
+        // Add to history
+        history.addEntry({
+          code: data.code,
+          thumbnail: pendingImageData,
+          styleGuide,
+          customPrompt,
+          colorPalette,
+          generationTime: duration,
+        });
+
         toast.success("Website generated!", {
-          description: `Completed in ${duration}s`
+          description: `Completed in ${duration.toFixed(2)}s`
         });
       } else {
         throw new Error("No code received from API");
@@ -208,16 +266,101 @@ export default function DrawingCanvas() {
       setIsAnalyzing(false);
       toast.dismiss(loadingToast);
     }
-  }, [pendingImageData, styleGuide, customPrompt, colorPalette, rateLimiter, imageSize]);
+  }, [pendingImageData, styleGuide, customPrompt, colorPalette, rateLimiter, imageSize, history]);
 
   const toggleMode = () => {
     setMode((prev) => (prev === "drawing" ? "preview" : "drawing"));
   };
 
+  // Handle history navigation
+  const handleSelectHistoryEntry = useCallback((id: string) => {
+    const entry = history.goToEntryById(id);
+    if (entry) {
+      setGeneratedCode(entry.code);
+      setStyleGuide(entry.styleGuide);
+      setCustomPrompt(entry.customPrompt || "");
+      setColorPalette(entry.colorPalette);
+      setMode("preview");
+      toast.success("Restored from history");
+    }
+  }, [history]);
+
+  const handleUndo = useCallback(() => {
+    const entry = history.undo();
+    if (entry) {
+      setGeneratedCode(entry.code);
+      setStyleGuide(entry.styleGuide);
+      setCustomPrompt(entry.customPrompt || "");
+      setColorPalette(entry.colorPalette);
+      setMode("preview");
+      toast.success("Undone");
+    }
+  }, [history]);
+
+  const handleRedo = useCallback(() => {
+    const entry = history.redo();
+    if (entry) {
+      setGeneratedCode(entry.code);
+      setStyleGuide(entry.styleGuide);
+      setCustomPrompt(entry.customPrompt || "");
+      setColorPalette(entry.colorPalette);
+      setMode("preview");
+      toast.success("Redone");
+    }
+  }, [history]);
+
+  // Handle keyboard shortcuts
+  const handleShortcut = useCallback((action: string) => {
+    switch (action) {
+      case 'undo':
+        handleUndo();
+        break;
+      case 'redo':
+        handleRedo();
+        break;
+      case 'generate':
+        handleGenerate();
+        break;
+      case 'togglePreview':
+        toggleMode();
+        break;
+      case 'toggleCode':
+        setShowCodePanel(prev => !prev);
+        break;
+      default:
+        break;
+    }
+  }, [handleUndo, handleRedo, handleGenerate, toggleMode]);
+
+  // Basic keyboard shortcuts (undo/redo still handled directly)
+  useEffect(() => {
+    const handleKeyboard = (e: KeyboardEvent) => {
+      // Skip if typing in input fields
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+      } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyboard);
+    return () => window.removeEventListener('keydown', handleKeyboard);
+  }, [handleUndo, handleRedo]);
+
   return (
     <div className="flex flex-col h-screen">
       {/* Top Control Bar */}
-      <div className="h-14 border-b bg-card px-4 flex items-center justify-between overflow-x-auto">
+      <div
+        className="h-14 border-b bg-card px-4 flex items-center justify-between overflow-x-auto"
+        role="toolbar"
+        aria-label="Main toolbar"
+      >
         <div className="flex gap-2 items-center">
           <Button
             variant={mode === "drawing" ? "default" : "outline"}
@@ -237,6 +380,22 @@ export default function DrawingCanvas() {
             <Eye className="h-4 w-4" />
             <span className="hidden sm:inline">Preview</span>
           </Button>
+
+          {/* Preview Mode Selector (only show in preview mode) */}
+          {mode === "preview" && generatedCode && (
+            <>
+              <Button
+                variant={previewMode === "comparison" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setPreviewMode("comparison")}
+                className="gap-2 h-8"
+                title="Side-by-side comparison"
+              >
+                <Columns2 className="h-4 w-4" />
+                <span className="hidden md:inline">Compare</span>
+              </Button>
+            </>
+          )}
           <div className="w-px h-6 bg-border mx-2" />
           <Button
             variant="default"
@@ -271,6 +430,26 @@ export default function DrawingCanvas() {
             <Code2 className="h-4 w-4" />
             {showCodePanel ? "Hide" : "Show"} Code
           </Button>
+
+          {/* History Controls */}
+          <div className="w-px h-6 bg-border mx-2" />
+          <HistoryPanel
+            entries={history.entries}
+            currentIndex={history.currentIndex}
+            onSelectEntry={handleSelectHistoryEntry}
+            onDeleteEntry={history.deleteEntry}
+            onClearHistory={history.clearHistory}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            canUndo={history.canUndo}
+            canRedo={history.canRedo}
+          />
+
+          {/* Export Menu */}
+          <ExportMenu code={generatedCode} disabled={!generatedCode} />
+
+          {/* Keyboard Shortcuts */}
+          <KeyboardShortcuts onShortcut={handleShortcut} />
         </div>
 
         {/* Style Controls */}
@@ -389,9 +568,13 @@ export default function DrawingCanvas() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden" id="main-content">
         {/* Canvas Area */}
-        <div className="flex-1 relative">
+        <div
+          className="flex-1 relative"
+          role="main"
+          aria-label="Drawing canvas area"
+        >
           {/* Excalidraw Canvas */}
           <div className="w-full h-full">
             <ExcalidrawWrapper
@@ -403,7 +586,11 @@ export default function DrawingCanvas() {
           <div>
             {mode === "preview" && generatedCode && (
               <div className="absolute inset-0 bg-background z-10">
-                <SimplePreview code={generatedCode} />
+                {previewMode === "simple" && <SimplePreview code={generatedCode} />}
+                {previewMode === "device" && <DevicePreview code={generatedCode} />}
+                {previewMode === "comparison" && (
+                  <ComparisonView code={generatedCode} sketchImage={pendingImageData} />
+                )}
               </div>
             )}
             {mode === "preview" && !generatedCode && (

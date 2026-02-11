@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Check, Copy, Download } from "lucide-react";
@@ -13,7 +13,7 @@ interface CodeBlockProps {
   filename?: string;
 }
 
-export function CodeBlock({ code, language = "tsx", filename = "GeneratedWebsite.tsx" }: CodeBlockProps) {
+export const CodeBlock = memo(function CodeBlock({ code, language = "tsx", filename = "GeneratedWebsite.tsx" }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -97,4 +97,4 @@ export function CodeBlock({ code, language = "tsx", filename = "GeneratedWebsite
       </div>
     </div>
   );
-}
+});
