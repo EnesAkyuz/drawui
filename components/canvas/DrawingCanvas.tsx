@@ -1,8 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Eye, Loader2, Pencil, Palette, Sparkles } from "lucide-react";
-import { useCallback, useState } from "react";
+import { Eye, Loader2, Pencil, Palette, Sparkles, AlertCircle, Code2 } from "lucide-react";
+import { useCallback, useState, useMemo, useEffect } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +23,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import SimplePreview from "./SimplePreview";
+import { CodeBlock } from "@/components/ui/code-block";
 import type { CanvasMode } from "@/types/canvas";
+import { compressImage, estimateImageSize, formatBytes } from "@/lib/image-utils";
+import { RateLimiter, debounce } from "@/lib/rate-limiter";
 
 const COLOR_PALETTES = {
   "Ocean Blue": {
@@ -90,9 +94,12 @@ export default function DrawingCanvas() {
   const [mode, setMode] = useState<CanvasMode>("drawing");
   const [generatedCode, setGeneratedCode] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [pendingImageData, setPendingImageData] = useState<string>("");
+  const [imageSize, setImageSize] = useState<number>(0);
   const [styleGuide, setStyleGuide] = useState<string>("Modern & Professional");
   const [customPrompt, setCustomPrompt] = useState<string>("");
+  const [showCodePanel, setShowCodePanel] = useState(true);
   const [colorPalette, setColorPalette] = useState({
     primary: "#3b82f6",
     secondary: "#8b5cf6",
@@ -101,26 +108,63 @@ export default function DrawingCanvas() {
     text: "#1f2937"
   });
 
-  // Just capture the image data, don't auto-analyze
+  // Rate limiter: 5 requests per minute
+  const rateLimiter = useMemo(() => new RateLimiter(5, 60000), []);
+
+  // Capture and compress image data
   const handleCapture = useCallback(
-    (imageData: string, elementsHash: string) => {
+    async (imageData: string, elementsHash: string) => {
       if (imageData) {
-        setPendingImageData(imageData);
-        console.log("📸 Canvas captured, ready to generate");
+        setIsCompressing(true);
+        try {
+          const originalSize = estimateImageSize(imageData);
+          const compressed = await compressImage(imageData);
+          const compressedSize = estimateImageSize(compressed);
+
+          setPendingImageData(compressed);
+          setImageSize(compressedSize);
+
+          console.log(`📸 Canvas captured - Original: ${formatBytes(originalSize)}, Compressed: ${formatBytes(compressedSize)}`);
+        } catch (error) {
+          console.error("Image compression error:", error);
+          setPendingImageData(imageData);
+          setImageSize(estimateImageSize(imageData));
+        } finally {
+          setIsCompressing(false);
+        }
       }
     },
     [],
   );
 
-  // Manual generation triggered by button
+  // Manual generation triggered by button with rate limiting
   const handleGenerate = useCallback(async () => {
     if (!pendingImageData) {
-      console.log("No drawing to analyze");
+      toast.error("No drawing to analyze", {
+        description: "Draw something on the canvas first"
+      });
+      return;
+    }
+
+    // Check rate limit
+    if (!rateLimiter.canMakeRequest()) {
+      const resetTime = Math.ceil(rateLimiter.getResetTime() / 1000);
+      toast.error("Rate limit exceeded", {
+        description: `Please wait ${resetTime} seconds before generating again`
+      });
       return;
     }
 
     const startTime = performance.now();
     setIsAnalyzing(true);
+
+    // Record the request
+    rateLimiter.recordRequest();
+
+    // Show progress toast
+    const loadingToast = toast.loading("Generating website...", {
+      description: `Image size: ${formatBytes(imageSize)}`
+    });
 
     try {
       const response = await fetch("/api/analyze-drawing", {
@@ -134,28 +178,37 @@ export default function DrawingCanvas() {
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Failed to generate website");
+        throw new Error(data.error || "Failed to generate website");
       }
 
-      const data = await response.json();
       const endTime = performance.now();
       const duration = ((endTime - startTime) / 1000).toFixed(2);
 
       console.log(`🎨 Website generated in ${duration}s`);
-      console.log("Generated code:", data.code?.substring(0, 200));
 
       if (data.code) {
         setGeneratedCode(data.code);
-        console.log("Code set, length:", data.code.length);
-        setMode("preview"); // Auto-switch to preview
+        setMode("preview");
+        toast.success("Website generated!", {
+          description: `Completed in ${duration}s`
+        });
+      } else {
+        throw new Error("No code received from API");
       }
     } catch (error) {
       console.error("Error generating website:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      toast.error("Generation failed", {
+        description: errorMessage
+      });
     } finally {
       setIsAnalyzing(false);
+      toast.dismiss(loadingToast);
     }
-  }, [pendingImageData, styleGuide, customPrompt, colorPalette]);
+  }, [pendingImageData, styleGuide, customPrompt, colorPalette, rateLimiter, imageSize]);
 
   const toggleMode = () => {
     setMode((prev) => (prev === "drawing" ? "preview" : "drawing"));
@@ -164,8 +217,8 @@ export default function DrawingCanvas() {
   return (
     <div className="flex flex-col h-screen">
       {/* Top Control Bar */}
-      <div className="h-14 border-b bg-card px-4 flex items-center justify-between">
-        <div className="flex gap-2">
+      <div className="h-14 border-b bg-card px-4 flex items-center justify-between overflow-x-auto">
+        <div className="flex gap-2 items-center">
           <Button
             variant={mode === "drawing" ? "default" : "outline"}
             size="sm"
@@ -173,7 +226,7 @@ export default function DrawingCanvas() {
             className="gap-2"
           >
             <Pencil className="h-4 w-4" />
-            Drawing
+            <span className="hidden sm:inline">Drawing</span>
           </Button>
           <Button
             variant={mode === "preview" ? "default" : "outline"}
@@ -182,33 +235,50 @@ export default function DrawingCanvas() {
             className="gap-2"
           >
             <Eye className="h-4 w-4" />
-            Preview
+            <span className="hidden sm:inline">Preview</span>
           </Button>
           <div className="w-px h-6 bg-border mx-2" />
           <Button
             variant="default"
             size="sm"
             onClick={handleGenerate}
-            disabled={isAnalyzing || !pendingImageData}
+            disabled={isAnalyzing || isCompressing || !pendingImageData}
             className="gap-2"
           >
             {isAnalyzing ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Generating...
+                <span className="hidden sm:inline">Generating...</span>
+              </>
+            ) : isCompressing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="hidden sm:inline">Compressing...</span>
               </>
             ) : (
-              "✨ Generate Website"
+              <>
+                <Sparkles className="h-4 w-4" />
+                <span className="hidden sm:inline">Generate</span>
+              </>
             )}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowCodePanel(!showCodePanel)}
+            className="gap-2 hidden lg:flex"
+          >
+            <Code2 className="h-4 w-4" />
+            {showCodePanel ? "Hide" : "Show"} Code
           </Button>
         </div>
 
         {/* Style Controls */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="hidden md:flex items-center gap-2">
             <Label htmlFor="style-select" className="text-sm whitespace-nowrap">Style:</Label>
             <Select value={styleGuide} onValueChange={setStyleGuide}>
-              <SelectTrigger id="style-select" className="h-8 w-[160px] text-sm">
+              <SelectTrigger id="style-select" className="h-8 w-[140px] lg:w-[160px] text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -303,10 +373,18 @@ export default function DrawingCanvas() {
           </Dialog>
 
           {generatedCode && !isAnalyzing && (
-            <Badge variant="default" className="text-sm px-3 py-1">
-              ✨ Ready to preview
+            <Badge variant="default" className="text-xs sm:text-sm px-2 sm:px-3 py-1 hidden sm:inline-flex">
+              ✨ Ready
             </Badge>
           )}
+          {imageSize > 0 && (
+            <Badge variant="outline" className="text-xs hidden xl:inline-flex">
+              {formatBytes(imageSize)}
+            </Badge>
+          )}
+          <Badge variant="outline" className="text-xs hidden xl:inline-flex">
+            {rateLimiter.getRemainingRequests()}/5 requests
+          </Badge>
         </div>
       </div>
 
@@ -314,14 +392,12 @@ export default function DrawingCanvas() {
       <div className="flex flex-1 overflow-hidden">
         {/* Canvas Area */}
         <div className="flex-1 relative">
-
-
-        {/* Excalidraw Canvas */}
-        <div className="w-full h-full">
-          <ExcalidrawWrapper
-            onCapture={handleCapture}
-          />
-        </div>
+          {/* Excalidraw Canvas */}
+          <div className="w-full h-full">
+            <ExcalidrawWrapper
+              onCapture={handleCapture}
+            />
+          </div>
 
           {/* Website Preview */}
           <div>
@@ -331,30 +407,77 @@ export default function DrawingCanvas() {
               </div>
             )}
             {mode === "preview" && !generatedCode && (
-              <div className="absolute inset-0 bg-background/95 z-10 flex items-center justify-center">
-                <p className="text-muted-foreground">
-                  Draw something and wait for AI to generate your website
-                </p>
+              <div className="absolute inset-0 bg-background/95 z-10 flex items-center justify-center p-4">
+                <div className="text-center space-y-2">
+                  <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto" />
+                  <p className="text-muted-foreground">
+                    Draw something and click Generate to create your website
+                  </p>
+                </div>
               </div>
             )}
           </div>
+
+          {/* Compression Indicator */}
+          {isCompressing && (
+            <div className="absolute top-4 left-4 bg-background/95 border rounded-lg px-4 py-2 flex items-center gap-2 z-20">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm">Optimizing image...</span>
+            </div>
+          )}
         </div>
 
-        {/* Code Panel */}
-        <div className="w-[400px] border-l bg-card p-4 overflow-y-auto">
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Generated Code</h2>
-            {generatedCode ? (
-              <pre className="bg-muted p-4 rounded text-xs overflow-auto max-h-[calc(100vh-100px)]">
-                <code>{generatedCode}</code>
-              </pre>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Draw something to generate code
-              </p>
-            )}
+        {/* Code Panel - Responsive */}
+        {showCodePanel && (
+          <div className="hidden lg:block w-[350px] xl:w-[450px] border-l bg-card overflow-y-auto">
+            <div className="p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Generated Code</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowCodePanel(false)}
+                  className="h-8 w-8 p-0"
+                >
+                  ✕
+                </Button>
+              </div>
+              {generatedCode ? (
+                <CodeBlock code={generatedCode} />
+              ) : (
+                <div className="text-center py-12 space-y-2">
+                  <Code2 className="h-12 w-12 text-muted-foreground mx-auto" />
+                  <p className="text-sm text-muted-foreground">
+                    Draw and generate to see code
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Mobile Code Panel - Full Screen Dialog */}
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="lg:hidden fixed bottom-4 right-4 z-20 gap-2 shadow-lg"
+              disabled={!generatedCode}
+            >
+              <Code2 className="h-4 w-4" />
+              View Code
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-full h-full max-h-full m-0 p-0">
+            <DialogHeader className="p-4 border-b">
+              <DialogTitle>Generated Code</DialogTitle>
+            </DialogHeader>
+            <div className="p-4 overflow-y-auto">
+              {generatedCode && <CodeBlock code={generatedCode} />}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
